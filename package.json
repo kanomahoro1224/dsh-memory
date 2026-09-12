@@ -26,7 +26,8 @@
     "./engine": {
       "types": "./lib/compaction/engine.d.ts",
       "default": "./lib/compaction/engine.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "lib",
