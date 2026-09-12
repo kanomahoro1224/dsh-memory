@@ -1,0 +1,56 @@
+# dsh-memory install overlay for DeepSeek Harness.
+#
+# Usage:
+#   1. Copy this file next to your project (or anywhere) and replace both
+#      <ABS>/ placeholders with the absolute directory that contains this
+#      plugin's package.json. Absolute paths are required for local plugins;
+#      if the package is installed into the profile (profile package.json +
+#      npm install), you may use the bare specifiers
+#      "dsh-memory/engine" and "dsh-memory" instead.
+#   2. Start the harness with the overlay:
+#        dsh web --patch ./cordis.patch.yml
+#
+# Why two inserted rows:
+#   - "dsh-memory-engine" is the class-form compaction engine. It subclasses
+#     BasicCompactionEngine and replaces its summarize() with the observational
+#     memory projection, so every compaction summary (automatic or /compact)
+#     carries the folded observations/reflections.
+#   - "observational-memory" is the apply-form plugin: it runs the background
+#     observer/reflector/dropper workers and registers /om-status, /om-view and
+#     the recall tool.
+#
+# Config may live on EITHER row (same keys). The plugin row's config overlays
+# the engine row's; the engine only needs config if you want its summarize()
+# path to see non-default pool/model settings.
+
+# The built-in compaction-basic row must not load: both engines would try to
+# provide the same "compaction" service, which cordis rejects. Patches cannot
+# rewrite a row's module path (the "name" field acts as a guard), so the
+# official replacement recipe is disable + insert.
+- id: compaction-basic
+  disabled: true
+
+- insert:
+    - id: dsh-memory-engine
+      name: '<ABS>/dsh-memory/lib/compaction/entry.js'
+
+    - id: dsh-memory
+      name: '<ABS>/dsh-memory/lib/index.js'
+      config:
+        # Background consolidation triggers (estimated source tokens).
+        observeAfterTokens: 10000
+        reflectAfterTokens: 20000
+        # Observation pool budget / drop target (estimated tokens).
+        observationsPoolMaxTokens: 20000
+        # Optional dedicated model for observer/reflector/dropper workers and
+        # the fallback checkpoint summarizer; defaults to the conversation's
+        # routed provider/model.
+        # model:
+        #   provider: deepseek
+        #   model: deepseek-chat
+        #   reasoningEffort: high
+        # Set true to keep /compact summaries observational while disabling
+        # all background workers (also via DSH_OBSERVATIONAL_MEMORY_PASSIVE=1).
+        # passive: false
+        # Write .dsh/observational-memory/debug logs.
+        # debugLog: false
