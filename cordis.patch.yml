@@ -1,0 +1,25 @@
+# dsh-memory bundle patch layer.
+#
+# Applied when a profile lists this package in dsh.profile.bundles (i.e. after
+# `dsh plugin --profile <name> add dsh-memory`). Rows reference the installed
+# package by name so Node resolution finds it in the profile's node_modules.
+#
+# Why the built-in compaction-basic row is disabled: both engines register the
+# "compaction" service and cordis rejects duplicate service names. Patches
+# cannot rewrite a row's module path (the "name" field acts as a guard), so the
+# official replacement recipe is disable + insert.
+#
+# The rows carry no config on purpose: the plugin's defaults live in code, and
+# a patch replaces a row's entire config, so starting empty lets users set any
+# subset of keys by patching these row ids from their profile cordis.patch.yml
+# (see README "配置" for the available keys).
+
+- id: compaction-basic
+  disabled: true
+
+- insert:
+    - id: dsh-memory-engine
+      name: dsh-memory/engine
+
+    - id: dsh-memory
+      name: dsh-memory

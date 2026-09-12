@@ -28,37 +28,37 @@
 
 ## 安装
 
-### 开发（仓库 checkout，绝对路径）
+### 一行命令（推荐）
+
+本包声明了 dsh 的 bundle 清单（`dsh.bundle`）并自带 `cordis.patch.yml` 补丁层，和其他 dsh
+插件一样可以一条命令装进 profile（`lib/` 构建产物已入库，安装无需本地构建）：
 
 ```sh
-git clone https://github.com/kanomahoro1224/dsh-memory
-cd dsh-memory
-npm install          # 含 --legacy-peer-deps 兜底；npm install 会通过 prepare 自动构建
-npm run build        # 已装依赖后可随时手动重建 lib/
+# 从 GitHub 安装
+dsh plugin --profile <profile名> add github:kanomahoro1224/dsh-memory
+
+# 或从本地 checkout 链接安装（改动即时生效，适合开发调试）
+dsh plugin --profile <profile名> add <本仓库的本地路径>
 ```
 
+首次使用会自动初始化 profile（以 `@deepseek-ai/dsh-base` 为第一层）。安装后包内补丁层即
+生效：禁用内置 `compaction-basic` 行，插入 OM 引擎行（行 id `dsh-memory-engine`）与插件行
+（行 id `dsh-memory`）。可用 `dsh --profile <profile名> --dump-config` 在不启动的情况下核对
+合成结果，确认后 `dsh --profile <profile名>` 启动。
+
+### npm registry 安装（可选）
+
+npm 上未占用的 `dsh-memory` 名字已被另一个无关插件占用；若要发布到 registry，需改用 scoped
+包名（例如 `@kanomahoro1224/dsh-memory`，并同步更新包内补丁层的行 `name`），然后同样一条
+命令安装：`dsh plugin --profile <profile名> add @kanomahoro1224/dsh-memory`。
+
+### 手动安装（--patch 覆盖层，不经 profile）
+
 复制 [`cordis.patch.yml.example`](./cordis.patch.yml.example) 为 `cordis.patch.yml`，把两处
-`<ABS>/` 替换为本目录的绝对路径，然后：
+`<ABS>/` 替换为仓库的绝对路径，然后：
 
 ```sh
 dsh web --patch ./cordis.patch.yml
-```
-
-### 正式安装（profile 内）
-
-在 profile 目录（`$DSH_HOME/profiles/<name>/`）的 `package.json` 中加入本包依赖并
-`npm install`，然后 patch 里用包名替代绝对路径：
-
-```yaml
-- id: compaction-basic
-  disabled: true
-
-- insert:
-    - id: dsh-memory-engine
-      name: 'dsh-memory/engine'
-    - id: observational-memory
-      name: 'dsh-memory'
-      config: { }
 ```
 
 ### 为什么必须 disable 内置的 compaction-basic
@@ -71,7 +71,7 @@ dsh 的 patch 机制按行 id 覆盖字段，但 `name`（模块路径）在 pat
 
 ## 配置
 
-配置放在插件行（`observational-memory`）上；引擎行可留空。插件行配置会覆盖引擎行配置，
+配置放在插件行（行 id `dsh-memory`）上；引擎行可留空。插件行配置会覆盖引擎行配置，
 引擎行配置只在插件行省略对应字段时作为回退。
 
 | 键 | 默认 | 说明 |
